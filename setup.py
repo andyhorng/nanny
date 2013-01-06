@@ -10,6 +10,7 @@ setup(
     license='LICENSE.txt',
     description='',
     long_description=open('README.txt').read(),
+    include_package_data = True,
     install_requires=[
         "pystache",
         "inflection"
