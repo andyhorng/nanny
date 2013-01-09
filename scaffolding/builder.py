@@ -14,10 +14,11 @@ class Scanner(object):
         self.template = template
 
     def fetch_variables(self, path):
+        print "scanning %s ..." % path
         # text to be render
         text = open(os.path.join(self.templates, self.template, path), 'r').read()
         text = text + path
-        parsed = pystache.parser.parse(unicode(text))
+        parsed = pystache.parser.parse(unicode(text, 'UTF-8'))
 
         # TODO: scan folder/file names
         def has_key(item):
@@ -126,16 +127,16 @@ class Builder(object):
                 for name in files:
                     with open(os.path.join(root, name), 'r+') as f:
                         print "rendering %s ..." % os.path.join(root, name)
-                        template = f.read().decode('UTF-8')
+                        template = unicode(f.read(), "UTF-8")
                         f.seek(0)
                         f.truncate()
-                        f.write(pystache.render(template, context))
+                        f.write(pystache.render(template, context).encode("UTF-8"))
 
         # folder names
         for root, dirs, files in os.walk(tmp_dest):
             if dirs:
                 for dir_ in map(lambda i: os.path.join(root, i), dirs):
-                    parsed = pystache.parser.parse(unicode(dir_))
+                    parsed = pystache.parser.parse(unicode(dir_, "UTF-8"))
                     if any(hasattr(item, 'key') for item in parsed._parse_tree):
                         new_dir = os.path.join(root, pystache.render(dir_, context))
                         if not os.path.exists(new_dir):
@@ -148,7 +149,7 @@ class Builder(object):
         for root, dirs, files in os.walk(tmp_dest):
             if files:
                 for f in map(lambda i: os.path.join(root, i), files):
-                    parsed = pystache.parser.parse(unicode(f))
+                    parsed = pystache.parser.parse(unicode(f, "UTF-8"))
                     if any(hasattr(item, 'key') for item in parsed._parse_tree):
                         # rename
                         os.rename(f, pystache.render(parsed, context))
