@@ -16,4 +16,9 @@ setup(
         "inflection",
         "pyyaml"
     ],
+    entry_points = {
+        'console_scripts': [
+            'getcode = scaffolding.app:main'
+        ]
+    }
 )

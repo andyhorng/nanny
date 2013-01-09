@@ -12,7 +12,7 @@ def builder_command_handler(args):
     builder = Builder(template=args.template)
     builder.build()
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='eztable scaffolding generator')
 
     subparsers = parser.add_subparsers(help='subcommand help')
@@ -28,3 +28,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     args.handler(args)
 
+if __name__ == '__main__':
+    main()
