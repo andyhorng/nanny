@@ -51,7 +51,7 @@ class Templater(object):
         self.template = template
         self.templates = templates
         self.desc_path = os.path.join(templates, template, "description.yml")
-        self.dynamic_path = os.path.join(templates, template, "description.py")
+        self.dynamic_path = os.path.join(templates, template, "dynamic.py")
 
     def render_yaml(self, scan_result):
         result = dict()
@@ -78,7 +78,10 @@ class Templater(object):
         scanner = Scanner(template=self.template,
                           templates=self.templates)
         self.write_yaml(scanner.scan(), self.desc_path)
-
+        if not os.path.exists(self.dynamic_path):
+            f = open(self.dynamic_path, 'w')
+            f.write("# dynamic variable callbacks")
+            f.close()
 
 class Builder(object):
     def __init__(self, template, templates=TEMPLATES):
@@ -106,14 +109,19 @@ class Builder(object):
             self.build_final(self.load_dynamic(context))
 
     def build_final(self, context, dest=os.getcwd()):
-        import shlex
-        path = os.path.join(self.templates, self.template)
-        paths = " ".join(os.path.join(path, item) for item in os.listdir(path))
-        command = "rsync -av %s %s" % (paths, dest)
-        subprocess.check_call(shlex.split(command))
+        source = os.path.join(self.templates, self.template)
+
+        import tempfile, time
+        tmp_dest = os.path.join(tempfile.gettempdir(), str(int(time.time())))
+
+        # copy to temp destination
+        self.merge_folder(source, tmp_dest)
+
+        os.remove(os.path.join(tmp_dest, "description.yml"))
+        os.remove(os.path.join(tmp_dest, "dynamic.py"))
 
         # render content
-        for root, dirs, files in os.walk(dest):
+        for root, dirs, files in os.walk(tmp_dest):
             if files:
                 for name in files:
                     with open(os.path.join(root, name), 'r+') as f:
@@ -124,7 +132,7 @@ class Builder(object):
                         f.write(pystache.render(template, context))
 
         # folder names
-        for root, dirs, files in os.walk(dest):
+        for root, dirs, files in os.walk(tmp_dest):
             if dirs:
                 for dir_ in map(lambda i: os.path.join(root, i), dirs):
                     parsed = pystache.parser.parse(unicode(dir_))
@@ -137,10 +145,19 @@ class Builder(object):
                         shutil.rmtree(dir_)
 
         # file names
-        for root, dirs, files in os.walk(dest):
+        for root, dirs, files in os.walk(tmp_dest):
             if files:
                 for f in map(lambda i: os.path.join(root, i), files):
                     parsed = pystache.parser.parse(unicode(f))
                     if any(hasattr(item, 'key') for item in parsed._parse_tree):
                         # rename
                         os.rename(f, pystache.render(parsed, context))
+
+        self.merge_folder(tmp_dest, dest)
+
+    def merge_folder(self, src, dest):
+        import shlex
+        paths = " ".join(os.path.join(src, item) for item in os.listdir(src))
+        command = "rsync -av %s %s" % (paths, dest)
+        subprocess.check_call(shlex.split(command))
+
