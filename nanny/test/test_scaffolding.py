@@ -2,7 +2,7 @@
 import unittest
 import tempfile
 from pkg_resources import resource_filename
-from builder import Scanner, Templater, Builder
+from scaffolding import Scanner, Templater, Generator
 
 TEMPLATES = resource_filename(__name__, "data/templates")
 
@@ -53,11 +53,11 @@ c:
 """
         self.assertMultiLineEqual(expected, result)
 
-class TestBuilder(unittest.TestCase):
+class TestGenerator(unittest.TestCase):
     def setUp(self):
-        self.builder = Builder(template="test", templates=TEMPLATES)
+        self.generator = Generator(template="test", templates=TEMPLATES)
 
-    def test_build_final(self):
+    def test_generate_final(self):
         import os, shutil
         tempdir = os.path.join(tempfile.gettempdir(), "scaffolding_test")
         # remove existed
@@ -65,7 +65,7 @@ class TestBuilder(unittest.TestCase):
             shutil.rmtree(tempdir)
         os.mkdir(tempdir)
 
-        self.builder.build_final(self.builder.load_dynamic({
+        self.generator.generate_final(self.generator.load_dynamic({
             'test': 'test value',
             'resource_url': 'xxx/xxx/xxx',
             'resource_collection_class': 'Class',
@@ -76,7 +76,7 @@ class TestBuilder(unittest.TestCase):
 
         self.assertDirectoryEqual(tempdir,
                                   resource_filename(__name__,
-                                                    "data/test_build_final"))
+                                                    "data/test_generate_final"))
 
     def assertDirectoryEqual(self, d1, d2):
         import os

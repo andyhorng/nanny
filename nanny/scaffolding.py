@@ -6,7 +6,7 @@ import subprocess
 import yaml
 import pystache
 
-TEMPLATES = os.path.expanduser("~/templates/")
+TEMPLATES = os.path.expanduser("~/.nanny/templates/")
 
 class Scanner(object):
     def __init__(self, template, templates=TEMPLATES):
@@ -84,7 +84,7 @@ class Templater(object):
             f.write("# dynamic variable callbacks")
             f.close()
 
-class Builder(object):
+class Generator(object):
     def __init__(self, template, templates=TEMPLATES):
         self.template = template
         self.templates = templates
@@ -98,7 +98,7 @@ class Builder(object):
             exec script in context
         return context
 
-    def build(self):
+    def generate(self):
         # fill
         with tempfile.NamedTemporaryFile() as f:
             config = dict()
@@ -107,9 +107,9 @@ class Builder(object):
             yaml.safe_dump(config, f, default_flow_style=False)
             subprocess.call(["vim", f.name])
             context = yaml.safe_load(open(f.name))
-            self.build_final(self.load_dynamic(context))
+            self.generate_final(self.load_dynamic(context))
 
-    def build_final(self, context, dest=os.getcwd()):
+    def generate_final(self, context, dest=os.getcwd()):
         source = os.path.join(self.templates, self.template)
 
         import tempfile, time
