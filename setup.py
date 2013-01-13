@@ -14,7 +14,8 @@ setup(
     install_requires=[
         "pystache",
         "inflection",
-        "pyyaml"
+        "pyyaml",
+        "MySQL-python"
     ],
     entry_points = {
         'console_scripts': [
