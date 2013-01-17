@@ -85,13 +85,19 @@ class Templater(object):
             f.close()
 
 class Generator(object):
-    def __init__(self, template, templates=TEMPLATES):
+    def __init__(self, template, templates=TEMPLATES, verbose=False):
         self.template = template
         self.templates = templates
         self.description = yaml.safe_load(open(os.path.join(templates,
                                                        template,
                                                        "description.yml")))
         self.dynamic_path = os.path.join(templates, template, "dynamic.py")
+
+        class Config(object):
+            pass
+
+        self.config = Config()
+        self.config.verbose = verbose
 
     def load_dynamic(self, context):
         with open(self.dynamic_path) as script:
@@ -110,6 +116,18 @@ class Generator(object):
             self.generate_final(self.load_dynamic(context))
 
     def generate_final(self, context, dest=os.getcwd()):
+
+        if self.config.verbose:
+            scanner = Scanner(self.template, self.templates)
+            keys = scanner.scan()
+            for key in keys:
+                if key in context:
+                    if callable(context[key]):
+                        print "%s: %s" % (key, context[key]())
+                    else:
+                        print "%s: %s" % (key, context[key])
+
+
         source = os.path.join(self.templates, self.template)
 
         import tempfile, time
